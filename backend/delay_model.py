@@ -88,20 +88,10 @@ class DelayPredictor:
         y = df["delayed"].values
         self.model = GradientBoostingClassifier(n_estimators=200, max_depth=4, random_state=42)
         self.model.fit(X, y)
-        with open(MODEL_PATH, "wb") as f:
-            pickle.dump(self, f)
         return self
 
     def load_or_train(self):
-        if os.path.exists(MODEL_PATH):
-            with open(MODEL_PATH, "rb") as f:
-                loaded = pickle.load(f)
-            self.model = loaded.model
-            self.origin_enc = loaded.origin_enc
-            self.dest_enc = loaded.dest_enc
-            self.aircraft_enc = loaded.aircraft_enc
-        else:
-            self.train()
+        self.train()
         return self
 
     def predict(
