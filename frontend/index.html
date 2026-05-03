@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Somon Air — Департамент наземного обслуживания</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:     #040a1e;
+      --surf:   #071230;
+      --surf2:  #0b1840;
+      --border: #1b3060;
+      --brand:  #1a3c6e;
+      --blue:   #2563eb;
+      --orange: #f97316;
+      --green:  #10b981;
+      --red:    #ef4444;
+      --teal:   #06b6d4;
+      --gold:   #f8d448;
+      --text:   #e8eeff;
+      --muted:  #6080b0;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter','Segoe UI',system-ui,sans-serif; min-height: 100vh; font-size: 14px; }
+
+    /* HEADER */
+    header {
+      background: linear-gradient(95deg, #020918 0%, #0d2147 55%, #1a3c6e 100%);
+      border-bottom: 2px solid var(--orange);
+      height: 68px; padding: 0 28px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+      box-shadow: 0 4px 30px rgba(0,0,0,.6);
+    }
+    .h-left { display: flex; align-items: center; gap: 16px; }
+    .h-logo { height: 38px; width: auto; filter: brightness(0) invert(1); flex-shrink: 0; }
+    .h-divider { width: 1px; height: 36px; background: rgba(255,255,255,.2); }
+    .h-dept { font-size: 13px; font-weight: 600; color: rgba(255,255,255,.9); }
+    .h-sub  { font-size: 10px; color: rgba(255,255,255,.4); letter-spacing: 1.2px; text-transform: uppercase; }
+    .h-right { display: flex; align-items: center; gap: 18px; }
+    .live { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: var(--green); text-transform: uppercase; letter-spacing: 1px; }
+    .live-dot { width: 7px; height: 7px; background: var(--green); border-radius: 50%; animation: blink 1.4s infinite; }
+    @keyframes blink { 0%,100%{opacity:1}50%{opacity:.15} }
+    #clock { font-size: 12px; color: rgba(255,255,255,.65); font-variant-numeric: tabular-nums; }
+
+    /* MAIN NAV */
+    .main-nav {
+      background: var(--surf); border-bottom: 1px solid var(--border);
+      padding: 0 28px; display: flex; gap: 2px; overflow-x: auto;
+    }
+    .main-tab {
+      background: none; border: none; border-bottom: 3px solid transparent;
+      color: var(--muted); padding: 14px 18px;
+      font-size: 13px; font-weight: 600; cursor: pointer;
+      transition: all .15s; font-family: inherit;
+      display: flex; align-items: center; gap: 7px; white-space: nowrap;
+    }
+    .main-tab:hover { color: var(--text); border-bottom-color: rgba(249,115,22,.4); }
+    .main-tab.active { color: var(--orange); border-bottom-color: var(--orange); }
+
+    /* TAB CONTENT */
+    .tab-content { display: none; padding: 22px 28px; max-width: 1800px; margin: 0 auto; }
+    .tab-content.active { display: block; }
+
+    /* PANELS */
+    .panel { background: linear-gradient(135deg,#071230,#0b1840); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .panel-hdr {
+      padding: 13px 18px; border-bottom: 1px solid var(--border);
+      font-weight: 600; font-size: 13px;
+      display: flex; align-items: center; gap: 8px;
+      background: rgba(26,60,110,.15);
+    }
+    .panel-hdr .chip { margin-left: auto; font-size: 10px; background: rgba(249,115,22,.13); color: var(--orange); border: 1px solid rgba(249,115,22,.3); padding: 2px 9px; border-radius: 20px; font-weight: 700; }
+    .panel-body { padding: 16px; }
+
+    /* KPI */
+    .kpi-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 14px; margin-bottom: 20px; }
+    .kpi-grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 20px; }
+    .kpi-card { background: linear-gradient(135deg,#071230,#0c1a40); border: 1px solid var(--border); border-radius: 14px; padding: 18px; position: relative; overflow: hidden; transition: transform .15s; }
+    .kpi-card:hover { transform: translateY(-2px); }
+    .kpi-card::after { content:''; position: absolute; top:0; left:0; right:0; height:3px; border-radius: 14px 14px 0 0; }
+    .kpi-card.c-blue::after   { background: var(--blue); }
+    .kpi-card.c-teal::after   { background: var(--teal); }
+    .kpi-card.c-orange::after { background: var(--orange); }
+    .kpi-card.c-green::after  { background: var(--green); }
+    .kpi-card.c-red::after    { background: var(--red); }
+    .kpi-icon { font-size: 20px; margin-bottom: 8px; display: block; }
+    .kpi-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
+    .kpi-val { font-size: 30px; font-weight: 800; line-height: 1; }
+    .kpi-val.blue   { color: var(--blue); }
+    .kpi-val.teal   { color: var(--teal); }
+    .kpi-val.orange { color: var(--orange); }
+    .kpi-val.green  { color: var(--green); }
+    .kpi-val.red    { color: var(--red); }
+    .kpi-sub { font-size: 10px; color: var(--muted); margin-top: 4px; }
+
+    /* ALERTS */
+    .alerts-wrap { margin-bottom: 18px; display: flex; flex-direction: column; gap: 6px; }
+    .alert-item { display: flex; align-items: center; gap: 10px; background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.2); border-radius: 8px; padding: 9px 14px; font-size: 12px; }
+    .alert-item.warn { background: rgba(249,115,22,.08); border-color: rgba(249,115,22,.2); }
+    .a-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; background: var(--red); }
+    .alert-item.warn .a-dot { background: var(--orange); }
+
+    /* TABLES */
+    .tbl-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead th { padding: 9px 14px; text-align: left; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); white-space: nowrap; font-size: 10px; text-transform: uppercase; letter-spacing: .7px; background: rgba(26,60,110,.08); }
+    tbody td { padding: 9px 14px; border-bottom: 1px solid rgba(27,48,96,.4); white-space: nowrap; }
+    tbody tr:last-child td { border-bottom: none; }
+    tbody tr:hover td { background: rgba(26,60,110,.12); }
+    .fno { font-weight: 800; color: var(--gold); letter-spacing: .5px; }
+
+    /* STATUS BADGES */
+    .st { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 6px; white-space: nowrap; }
+    .st.arrived   { background: rgba(16,185,129,.12); color: var(--green);  border: 1px solid rgba(16,185,129,.25); }
+    .st.en_route  { background: rgba(6,182,212,.12);  color: var(--teal);   border: 1px solid rgba(6,182,212,.25); }
+    .st.scheduled { background: rgba(37,99,235,.12);  color: #60a5fa;       border: 1px solid rgba(37,99,235,.25); }
+    .st.departing { background: rgba(249,115,22,.15); color: var(--orange); border: 1px solid rgba(249,115,22,.3); animation: dep-pulse 2s infinite; }
+    .st.delayed   { background: rgba(239,68,68,.12);  color: var(--red);    border: 1px solid rgba(239,68,68,.25); }
+    .st.cancelled { background: rgba(120,50,50,.15);  color: #f87171;       border: 1px solid rgba(239,68,68,.2); }
+    .st.departed  { background: rgba(96,112,176,.12); color: var(--muted);  border: 1px solid rgba(96,112,176,.2); }
+    @keyframes dep-pulse { 0%,100%{opacity:1}50%{opacity:.6} }
+
+    /* RISK PILLS */
+    .risk-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 700; padding: 3px 9px; border-radius: 6px; }
+    .risk-pill::before { content:''; width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+    .risk-pill.LOW    { background: rgba(16,185,129,.1);  color: var(--green);  border: 1px solid rgba(16,185,129,.2); }
+    .risk-pill.MEDIUM { background: rgba(249,115,22,.1);  color: var(--orange); border: 1px solid rgba(249,115,22,.2); }
+    .risk-pill.HIGH   { background: rgba(239,68,68,.1);   color: var(--red);    border: 1px solid rgba(239,68,68,.2); }
+    .risk-pill.LOW::before    { background: var(--green); }
+    .risk-pill.MEDIUM::before { background: var(--orange); }
+    .risk-pill.HIGH::before   { background: var(--red); }
+
+    /* SUB-TABS */
+    .subtab { background: none; border: 1px solid var(--border); color: var(--muted); border-radius: 8px; padding: 5px 12px; font-size: 11px; font-weight: 600; cursor: pointer; transition: all .15s; font-family: inherit; }
+    .subtab:hover { border-color: var(--blue); color: var(--text); }
+    .subtab.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+    .subtabs-row { padding: 10px 18px 0; display: flex; gap: 4px; flex-wrap: wrap; }
+
+    /* MONITORING GRID */
+    .monitor-grid { display: grid; grid-template-columns: 1fr 340px; gap: 16px; margin-bottom: 18px; align-items: start; }
+    .chart-wrap { padding: 14px; }
+    .map-wrap { padding: 14px; }
+    #route-map { width: 100%; border-radius: 8px; display: block; }
+
+    /* FORM ELEMENTS */
+    .form-row   { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .fg { margin-bottom: 12px; }
+    label { display: block; font-size: 10px; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .7px; }
+    select, input[type=number], input[type=date] {
+      width: 100%; background: #050b1f; border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); padding: 8px 11px; font-size: 13px;
+      outline: none; transition: border-color .15s; font-family: inherit;
+    }
+    select:focus, input:focus { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(26,60,110,.25); }
+    .btn-primary {
+      width: 100%; padding: 11px;
+      background: linear-gradient(90deg,#f97316,#ea580c);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit;
+      transition: opacity .15s, transform .1s;
+      box-shadow: 0 4px 16px rgba(249,115,22,.25);
+    }
+    .btn-primary:hover { opacity: .9; transform: translateY(-1px); }
+    .btn-primary:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+    /* PREDICT RESULT */
+    .pred-layout { display: grid; grid-template-columns: 380px 1fr; gap: 20px; align-items: start; }
+    .result-box { margin-top: 14px; background: #050b1f; border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: none; }
+    .result-box.show { display: block; }
+    .r-lbl { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
+    .r-risk { font-size: 28px; font-weight: 900; letter-spacing: 1px; margin-bottom: 3px; }
+    .r-risk.LOW    { color: var(--green); }
+    .r-risk.MEDIUM { color: var(--orange); }
+    .r-risk.HIGH   { color: var(--red); }
+    .r-prob { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+    .r-bar { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .r-fill { height: 100%; border-radius: 4px; transition: width .6s cubic-bezier(.4,0,.2,1); }
+    .r-fill.LOW    { background: linear-gradient(90deg,var(--green),#34d399); }
+    .r-fill.MEDIUM { background: linear-gradient(90deg,#d97706,var(--orange)); }
+    .r-fill.HIGH   { background: linear-gradient(90deg,var(--red),#f87171); }
+    .r-factors { margin-top: 12px; display: flex; flex-direction: column; gap: 7px; }
+    .r-factor { display: flex; justify-content: space-between; font-size: 11px; }
+    .r-factor-name { color: var(--muted); }
+
+    /* PRED HISTORY */
+    .phi { background: #050b1f; border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px; display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .phi-route { font-weight: 700; font-size: 13px; flex: 1; }
+    .phi-time { font-size: 11px; color: var(--muted); }
+
+    /* CREWS */
+    .crew-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+    .icao-badge { display: inline-flex; padding: 2px 7px; border-radius: 5px; font-size: 10px; font-weight: 700; background: rgba(26,60,110,.3); color: #90b4e8; border: 1px solid rgba(26,60,110,.5); }
+    .hours-bar { display: flex; align-items: center; gap: 8px; }
+    .hours-bg { width: 70px; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .hours-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg,#1a3c6e,#2563eb); }
+
+    /* MAINTENANCE */
+    .maint-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .maint-card { background: linear-gradient(135deg,#071230,#0c1840); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .maint-hdr { padding: 14px 16px; background: rgba(26,60,110,.2); border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+    .maint-reg { font-size: 18px; font-weight: 800; color: var(--gold); letter-spacing: 1px; }
+    .maint-type { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .maint-badge { font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 6px; }
+    .maint-badge.ok       { background: rgba(16,185,129,.12); color: var(--green); border: 1px solid rgba(16,185,129,.2); }
+    .maint-badge.warn     { background: rgba(249,115,22,.12); color: var(--orange); border: 1px solid rgba(249,115,22,.2); }
+    .maint-badge.critical { background: rgba(239,68,68,.12);  color: var(--red);   border: 1px solid rgba(239,68,68,.2); }
+    .maint-body { padding: 14px 16px; }
+    .s-bar-wrap { margin-bottom: 10px; }
+    .s-bar-lbl { display: flex; justify-content: space-between; font-size: 10px; color: var(--muted); margin-bottom: 3px; }
+    .s-bar { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+    .s-bar-fill { height: 100%; border-radius: 3px; transition: width .5s; }
+    .s-bar-fill.ok     { background: linear-gradient(90deg,#10b981,#34d399); }
+    .s-bar-fill.warn   { background: linear-gradient(90deg,#d97706,#f97316); }
+    .s-bar-fill.danger { background: linear-gradient(90deg,#dc2626,#ef4444); }
+    .maint-footer { padding: 10px 16px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+
+    /* PLANNING */
+    .plan-controls { background: linear-gradient(135deg,#071230,#0c1840); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 20px; display: flex; gap: 14px; align-items: flex-end; flex-wrap: wrap; }
+    .plan-controls .fg { flex: 1; min-width: 150px; margin-bottom: 0; }
+    .btn-plan { padding: 9px 22px; background: linear-gradient(90deg,#1a3c6e,#2563eb); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; transition: opacity .15s; }
+    .btn-plan:hover { opacity: .88; }
+    .plan-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+    .weather-card { background: linear-gradient(135deg,#071230,#0c1840); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+    .weather-hdr { padding: 12px 16px; border-bottom: 1px solid var(--border); background: rgba(26,60,110,.15); font-weight: 600; font-size: 13px; }
+    .weather-body { padding: 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .wx-metric { text-align: center; }
+    .wx-val { font-size: 22px; font-weight: 800; }
+    .wx-unit { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* MISC */
+    .empty-row td { text-align: center; padding: 36px; color: var(--muted); font-size: 13px; }
+    .error-row td { text-align: center; padding: 20px; color: var(--red); font-size: 12px; }
+    .sec-gap { margin-bottom: 18px; }
+
+    @media(max-width:1200px) {
+      .kpi-grid  { grid-template-columns: repeat(3,1fr); }
+      .kpi-grid-4 { grid-template-columns: repeat(2,1fr); }
+      .monitor-grid { grid-template-columns: 1fr; }
+      .pred-layout  { grid-template-columns: 1fr; }
+      .maint-grid   { grid-template-columns: repeat(2,1fr); }
+    }
+    @media(max-width:768px) {
+      .kpi-grid, .kpi-grid-4 { grid-template-columns: repeat(2,1fr); }
+      .tab-content { padding: 14px; }
+      header { padding: 0 14px; }
+      .maint-grid { grid-template-columns: 1fr; }
+      .plan-grid  { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="h-left">
+    <img class="h-logo"
+         src="https://www.somonair.com/img/general/logo-light-2.svg"
+         alt="Somon Air"
+         onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex'"/>
+    <div id="logo-fb" style="display:none;align-items:center;gap:8px">
+      <div style="width:40px;height:40px;background:#f97316;border-radius:9px;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:15px">SA</div>
+      <span style="font-size:20px;font-weight:800;letter-spacing:2px;color:#fff">SOMON AIR</span>
+    </div>
+    <div class="h-divider"></div>
+    <div>
+      <div class="h-dept">Департамент наземного обслуживания</div>
+      <div class="h-sub">Operations Control Centre · DYU HUB</div>
+    </div>
+  </div>
+  <div class="h-right">
+    <div class="live"><div class="live-dot"></div>LIVE</div>
+    <div id="clock"></div>
+  </div>
+</header>
+
+<!-- MAIN NAV TABS -->
+<nav class="main-nav">
+  <button class="main-tab active" onclick="switchTab('monitoring',this)">📡 Мониторинг</button>
+  <button class="main-tab" onclick="switchTab('prediction',this)">🧠 Прогноз задержек</button>
+  <button class="main-tab" onclick="switchTab('crews',this)">👨‍✈️ Экипажи</button>
+  <button class="main-tab" onclick="switchTab('maintenance',this)">🔧 Техобслуживание</button>
+  <button class="main-tab" onclick="switchTab('planning',this)">📋 Планирование</button>
+</nav>
+
+<!-- ═══════════════════════ TAB: МОНИТОРИНГ ═══════════════════════ -->
+<div id="tab-monitoring" class="tab-content active">
+
+  <div class="kpi-grid">
+    <div class="kpi-card c-blue">
+      <span class="kpi-icon">✈</span>
+      <div class="kpi-lbl">Всего рейсов</div>
+      <div class="kpi-val blue" id="k-total">—</div>
+      <div class="kpi-sub">в расписании</div>
+    </div>
+    <div class="kpi-card c-teal">
+      <span class="kpi-icon">🌐</span>
+      <div class="kpi-lbl">В воздухе</div>
+      <div class="kpi-val teal" id="k-airborne">—</div>
+      <div class="kpi-sub">борт активен</div>
+    </div>
+    <div class="kpi-card c-orange">
+      <span class="kpi-icon">⚠</span>
+      <div class="kpi-lbl">Задержаны</div>
+      <div class="kpi-val orange" id="k-delayed">—</div>
+      <div class="kpi-sub">рейсов</div>
+    </div>
+    <div class="kpi-card c-green">
+      <span class="kpi-icon">✓</span>
+      <div class="kpi-lbl">Пунктуальность</div>
+      <div class="kpi-val green" id="k-ontime">—</div>
+      <div class="kpi-sub">вовремя</div>
+    </div>
+    <div class="kpi-card c-red">
+      <span class="kpi-icon">✕</span>
+      <div class="kpi-lbl">Отменены</div>
+      <div class="kpi-val red" id="k-cancelled">0</div>
+      <div class="kpi-sub">за сегодня</div>
+    </div>
+  </div>
+
+  <div class="alerts-wrap" id="alerts-wrap"></div>
+
+  <div class="monitor-grid sec-gap">
+    <!-- FLIGHTS TABLE -->
+    <div class="panel">
+      <div class="panel-hdr">
+        🛫 Рейсы — живое табло
+        <span class="chip" id="fb-chip">загрузка…</span>
+      </div>
+      <div class="subtabs-row">
+        <button class="subtab active" onclick="setFbTab('all',this)">Все рейсы</button>
+        <button class="subtab" onclick="setFbTab('dep',this)">↑ Вылет DYU</button>
+        <button class="subtab" onclick="setFbTab('arr',this)">↓ Прилёт DYU</button>
+        <button class="subtab" onclick="setFbTab('active',this)">⚡ Активные</button>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Рейс</th><th>Маршрут</th><th>Вылет</th><th>Прилёт</th>
+              <th>Борт</th><th>Статус</th><th>Задержка</th><th>DSS</th>
+            </tr>
+          </thead>
+          <tbody id="main-tbody">
+            <tr class="empty-row"><td colspan="8">⏳ Загрузка…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SIDEBAR: MAP + CHART -->
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <div class="panel">
+        <div class="panel-hdr">✈ Карта маршрутов <span class="chip">ХАБ · DYU</span></div>
+        <div class="map-wrap"><canvas id="route-map"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-hdr">📊 Статус рейсов</div>
+        <div class="chart-wrap" style="height:148px"><canvas id="chart-status"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROUTES CHART -->
+  <div class="panel">
+    <div class="panel-hdr">📈 Средняя задержка по маршрутам</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="chart-routes"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB: ПРОГНОЗ ═══════════════════════ -->
+<div id="tab-prediction" class="tab-content">
+  <div class="pred-layout">
+    <div class="panel">
+      <div class="panel-hdr">🧠 Прогноз задержки рейса</div>
+      <div class="panel-body">
+        <div class="form-row">
+          <div class="fg"><label>Откуда</label><select id="p-origin"></select></div>
+          <div class="fg"><label>Куда</label><select id="p-dest"></select></div>
+        </div>
+        <div class="form-row">
+          <div class="fg"><label>Дата вылета</label><input type="date" id="p-date"/></div>
+          <div class="fg"><label>Час вылета (0–23)</label><input type="number" id="p-hour" min="0" max="23" value="10"/></div>
+        </div>
+        <div class="fg">
+          <label>Тип воздушного судна</label>
+          <select id="p-aircraft">
+            <option>B737</option><option>A320</option><option>B757</option><option>A319</option>
+          </select>
+        </div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:12px 0 8px;border-top:1px solid var(--border);padding-top:12px">Метеоусловия</div>
+        <div class="form-row">
+          <div class="fg"><label>Ветер (км/ч)</label><input type="number" id="p-wind" min="0" max="200" value="12"/></div>
+          <div class="fg"><label>Температура (°C)</label><input type="number" id="p-temp" min="-40" max="55" value="22"/></div>
+        </div>
+        <div class="form-row">
+          <div class="fg"><label>Видимость (км)</label><input type="number" id="p-vis" min="0.1" max="10" step="0.1" value="8"/></div>
+          <div class="fg">
+            <label>День</label>
+            <select id="p-weekend">
+              <option value="0">Будний день</option>
+              <option value="1">Выходной день</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn-primary" id="predict-btn" onclick="predict()">Рассчитать прогноз задержки</button>
+
+        <div class="result-box" id="result-box">
+          <div class="r-lbl">Уровень риска задержки</div>
+          <div class="r-risk" id="r-risk"></div>
+          <div class="r-prob" id="r-prob"></div>
+          <div class="r-bar"><div class="r-fill" id="r-fill"></div></div>
+          <div class="r-factors">
+            <div class="r-factor"><span class="r-factor-name">💨 Ветровой фактор</span><span id="rf-wind"></span></div>
+            <div class="r-factor"><span class="r-factor-name">🌡 Температурный фактор</span><span id="rf-temp"></span></div>
+            <div class="r-factor"><span class="r-factor-name">👁 Видимость</span><span id="rf-vis"></span></div>
+            <div class="r-factor"><span class="r-factor-name">🕐 Временной фактор</span><span id="rf-hour"></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="panel sec-gap">
+        <div class="panel-hdr">📜 История прогнозов</div>
+        <div class="panel-body">
+          <div id="pred-history">
+            <div style="text-align:center;color:var(--muted);font-size:12px;padding:20px">Здесь появятся ваши прогнозы</div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-hdr">ℹ О модели</div>
+        <div class="panel-body" style="font-size:12px;color:var(--muted);line-height:1.8">
+          <p>Модель: <strong style="color:var(--text)">GradientBoostingClassifier</strong></p>
+          <p>Обучена на: <strong style="color:var(--text)">5 000 синтетических записей</strong></p>
+          <p>Признаки: маршрут, час вылета, тип ВС, ветер, температура, видимость, день</p>
+          <p style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+            LOW &lt;25% · MEDIUM 25–50% · HIGH &gt;50%
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB: ЭКИПАЖИ ═══════════════════════ -->
+<div id="tab-crews" class="tab-content">
+  <div class="kpi-grid-4 sec-gap">
+    <div class="kpi-card c-blue">
+      <span class="kpi-icon">👨‍✈️</span>
+      <div class="kpi-lbl">Всего пилотов</div>
+      <div class="kpi-val blue">24</div>
+      <div class="kpi-sub">в штате</div>
+    </div>
+    <div class="kpi-card c-teal">
+      <span class="kpi-icon">✈</span>
+      <div class="kpi-lbl">В полёте</div>
+      <div class="kpi-val teal">8</div>
+      <div class="kpi-sub">прямо сейчас</div>
+    </div>
+    <div class="kpi-card c-orange">
+      <span class="kpi-icon">⏳</span>
+      <div class="kpi-lbl">Дежурство</div>
+      <div class="kpi-val orange">6</div>
+      <div class="kpi-sub">готовность 30 мин</div>
+    </div>
+    <div class="kpi-card c-green">
+      <span class="kpi-icon">💤</span>
+      <div class="kpi-lbl">Отдых</div>
+      <div class="kpi-val green">10</div>
+      <div class="kpi-sub">по расписанию</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr">👨‍✈️ Состав лётных экипажей <span class="chip green">24 чел.</span></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>ФИО</th><th>Должность</th><th>Статус</th>
+            <th>Лётные часы</th><th>Квалификация (ИКАО)</th><th>Рейс</th><th>Медосмотр</th>
+          </tr>
+        </thead>
+        <tbody id="crew-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════ TAB: ТЕХОБСЛУЖИВАНИЕ ═══════════════════════ -->
+<div id="tab-maintenance" class="tab-content">
+  <div class="kpi-grid-4 sec-gap">
+    <div class="kpi-card c-green">
+      <span class="kpi-icon">✅</span>
+      <div class="kpi-lbl">Исправны</div>
+      <div class="kpi-val green" id="maint-ok">—</div>
+      <div class="kpi-sub">бортов</div>
+    </div>
+    <div class="kpi-card c-orange">
+      <span class="kpi-icon">⚠</span>
+      <div class="kpi-lbl">Внимание</div>
+      <div class="kpi-val orange" id="maint-warn">—</div>
+      <div class="kpi-sub">требует контроля</div>
+    </div>
+    <div class="kpi-card c-red">
+      <span class="kpi-icon">🔧</span>
+      <div class="kpi-lbl">Техобслуживание</div>
+      <div class="kpi-val red" id="maint-crit">—</div>
+      <div class="kpi-sub">на ТО</div>
+    </div>
+    <div class="kpi-card c-blue">
+      <span class="kpi-icon">🛩</span>
+      <div class="kpi-lbl">Бортов в парке</div>
+      <div class="kpi-val blue">6</div>
+      <div class="kpi-sub">воздушных судов</div>
+    </div>
+  </div>
+  <div class="maint-grid" id="maint-grid"></div>
+</div>
+
+<!-- ═══════════════════════ TAB: ПЛАНИРОВАНИЕ ═══════════════════════ -->
+<div id="tab-planning" class="tab-content">
+  <div class="plan-controls">
+    <div class="fg">
+      <label>Маршрут — откуда</label>
+      <select id="pl-origin">
+        <option value="TJK">DYU — Душанбе</option>
+        <option value="DME">DME — Москва</option>
+        <option value="DXB">DXB — Дубай</option>
+        <option value="IST">IST — Стамбул</option>
+        <option value="FRU">FRU — Бишкек</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Маршрут — куда</label>
+      <select id="pl-dest">
+        <option value="DME">DME — Москва</option>
+        <option value="DXB">DXB — Дубай</option>
+        <option value="IST">IST — Стамбул</option>
+        <option value="TJK">DYU — Душанбе</option>
+        <option value="FRU">FRU — Бишкек</option>
+        <option value="URC">URC — Урумчи</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Дата начала</label>
+      <input type="date" id="pl-from"/>
+    </div>
+    <div class="fg">
+      <label>Дата конца</label>
+      <input type="date" id="pl-to"/>
+    </div>
+    <div style="flex:0;align-self:flex-end">
+      <button class="btn-plan" onclick="loadPlanning()">▶ Анализировать</button>
+    </div>
+  </div>
+
+  <div class="plan-grid sec-gap">
+    <div class="weather-card">
+      <div class="weather-hdr">🌤 Погода — <span id="pl-orig-name">DYU</span></div>
+      <div class="weather-body">
+        <div class="wx-metric"><div class="wx-val" style="color:var(--orange)" id="wxo-temp">—</div><div class="wx-unit">Температура °C</div></div>
+        <div class="wx-metric"><div class="wx-val" style="color:var(--teal)"   id="wxo-wind">—</div><div class="wx-unit">Ветер км/ч</div></div>
+        <div class="wx-metric"><div class="wx-val" style="color:var(--text)"   id="wxo-vis">—</div><div class="wx-unit">Видимость км</div></div>
+        <div class="wx-metric"><div class="wx-val" style="color:var(--muted)"  id="wxo-hum">—</div><div class="wx-unit">Влажность %</div></div>
+      </div>
+    </div>
+    <div class="weather-card">
+      <div class="weather-hdr">🌤 Погода — <span id="pl-dest-name">DME</span></div>
+      <div class="weather-body">
+        <div class="wx-metric"><div class="wx-val" style="color:var(--orange)" id="wxd-temp">—</div><div class="wx-unit">Температура °C</div></div>
+        <div class="wx-metric"><div class="wx-val" style="color:var(--teal)"   id="wxd-wind">—</div><div class="wx-unit">Ветер км/ч</div></div>
+        <div class="wx-metric"><div class="wx-val" style="color:var(--text)"   id="wxd-vis">—</div><div class="wx-unit">Видимость км</div></div>
+        <div class="wx-metric"><div class="wx-val" style="color:var(--muted)"  id="wxd-hum">—</div><div class="wx-unit">Влажность %</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel sec-gap">
+    <div class="panel-hdr">📅 Расписание и риски задержек <span class="chip" id="pl-chip">выберите параметры</span></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Дата</th><th>День</th><th>Вылет</th>
+            <th>Загруженность (вылет)</th><th>Загруженность (прилёт)</th>
+            <th>Ветер</th><th>Темп.</th><th>Видимость</th><th>Риск задержки</th>
+          </tr>
+        </thead>
+        <tbody id="plan-tbody">
+          <tr class="empty-row"><td colspan="9">Нажмите «Анализировать»</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-hdr">📊 Прогноз риска задержек по дням</div>
+    <div class="chart-wrap" style="height:200px"><canvas id="chart-plan"></canvas></div>
+  </div>
+</div>
+
+<script>
+const API = '';
+
+// ── TAB SWITCHING ────────────────────────────────────────────────────────────
+function switchTab(id, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.main-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'monitoring') setTimeout(initMap, 50);
+}
+
+// ── CLOCK ────────────────────────────────────────────────────────────────────
+function updateClock() {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleString('ru', { dateStyle:'short', timeStyle:'medium' });
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// ── FLIGHTBOARD ──────────────────────────────────────────────────────────────
+let fbFlights = [], fbTab = 'all';
+const ST_ICON = { arrived:'✓', departed:'↑', departing:'→', scheduled:'◷', en_route:'✈', delayed:'⚠', cancelled:'✕' };
+
+function setFbTab(tab, el) {
+  fbTab = tab;
+  document.querySelectorAll('.subtabs-row .subtab').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderFbTable();
+}
+function filterFb(tab) {
+  if (tab === 'dep')    return fbFlights.filter(f => f.origin === 'DYU');
+  if (tab === 'arr')    return fbFlights.filter(f => f.destination === 'DYU');
+  if (tab === 'active') return fbFlights.filter(f => ['en_route','departing','delayed'].includes(f.status_type));
+  return fbFlights;
+}
+function renderFbTable() {
+  const tbody = document.getElementById('main-tbody');
+  const data = filterFb(fbTab);
+  if (!data.length) { tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Нет данных по фильтру</td></tr>'; return; }
+  tbody.innerHTML = data.map(f => `
+    <tr>
+      <td><span class="fno">${f.flight_no}</span></td>
+      <td>
+        <strong>${f.origin}</strong><span style="color:var(--muted);margin:0 4px">›</span><strong>${f.destination}</strong><br>
+        <span style="font-size:10px;color:var(--muted)">${f.origin_city||''} → ${f.destination_city||''}</span>
+      </td>
+      <td>${f.dep_day?`<span style="font-size:9px;color:var(--orange);margin-right:3px">${f.dep_day}</span>`:''}${f.dep_time}</td>
+      <td>${f.arr_time}</td>
+      <td><span style="font-size:11px;color:var(--muted)">—</span></td>
+      <td><span class="st ${f.status_type}">${ST_ICON[f.status_type]||''} ${f.status}</span></td>
+      <td>—</td>
+      <td id="dss-${f.id}"><span style="color:var(--muted);font-size:10px">…</span></td>
+    </tr>`).join('');
+}
+
+async function loadMonitoring() {
+  try {
+    const [fbRes, dbFlights, stats] = await Promise.all([
+      fetch(`${API}/api/flightboard`).then(r => r.json()),
+      fetch(`${API}/api/flights`).then(r => r.json()),
+      fetch(`${API}/api/stats`).then(r => r.json()),
+    ]);
+
+    fbFlights = fbRes.flights || [];
+    document.getElementById('fb-chip').textContent = `${fbFlights.length} рейсов`;
+    document.getElementById('k-total').textContent    = stats.total_flights;
+    document.getElementById('k-delayed').textContent  = stats.delayed_flights;
+    document.getElementById('k-ontime').textContent   = stats.on_time_rate + '%';
+    document.getElementById('k-airborne').textContent = fbFlights.filter(f => f.status_type === 'en_route').length;
+    document.getElementById('k-cancelled').textContent = fbFlights.filter(f => f.status_type === 'cancelled').length;
+
+    buildAlerts(fbFlights);
+    renderFbTable();
+    buildCharts(dbFlights, stats);
+    initMap();
+
+    // DSS async
+    const sample = fbFlights.slice(0, 18);
+    for (const f of sample) {
+      fetch(`${API}/api/predict`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          origin: f.origin || 'TJK', destination: f.destination || 'DME',
+          dep_hour: (() => { const m = (f.dep_time || '').match(/(\d{1,2}):/); return m ? parseInt(m[1]) : 10; })(),
+          aircraft: 'B737', wind_speed: 12, temperature: 20, visibility: 8, is_weekend: 0,
+        })
+      }).then(r => r.json()).then(res => {
+        const el = document.getElementById(`dss-${f.id}`);
+        if (el) el.innerHTML = `<span class="risk-pill ${res.risk}">${res.risk}</span>`;
+      }).catch(() => {});
+    }
+
+  } catch(e) {
+    document.getElementById('main-tbody').innerHTML =
+      `<tr class="error-row"><td colspan="8">⚠ ${e.message}</td></tr>`;
+  }
+}
+
+function buildAlerts(flights) {
+  const wrap = document.getElementById('alerts-wrap');
+  const items = [];
+  flights.filter(f => f.status_type === 'delayed').slice(0,3).forEach(f =>
+    items.push(`<div class="alert-item"><div class="a-dot"></div>Рейс <strong>${f.flight_no}</strong> (${f.origin}→${f.destination}) задержан — ${f.status}</div>`));
+  flights.filter(f => f.status_type === 'cancelled').slice(0,2).forEach(f =>
+    items.push(`<div class="alert-item warn"><div class="a-dot"></div>Рейс <strong>${f.flight_no}</strong> (${f.origin}→${f.destination}) ОТМЕНЁН</div>`));
+  wrap.innerHTML = items.join('');
+}
+
+// ── ROUTE MAP ────────────────────────────────────────────────────────────────
+const AP = {
+  DYU:{name:'Душанбе',x:427,y:204,hub:true}, DME:{name:'Москва',x:157,y:44},
+  DXB:{name:'Дубай',x:310,y:330}, IST:{name:'Стамбул',x:77,y:180},
+  FRU:{name:'Бишкек',x:478,y:161}, URC:{name:'Урумчи',x:590,y:153},
+  LBD:{name:'Худжанд',x:453,y:214}, NQZ:{name:'Астана',x:447,y:85},
+  LED:{name:'СПб',x:145,y:25}, KZN:{name:'Казань',x:222,y:60},
+  OVB:{name:'Новосибирск',x:492,y:55}, TAS:{name:'Ташкент',x:462,y:196},
+  DEL:{name:'Дели',x:528,y:262},
+};
+const LO = {
+  DYU:{dx:-14,dy:-16,a:'end'}, DME:{dx:9,dy:15,a:'start'}, DXB:{dx:9,dy:-10,a:'start'},
+  IST:{dx:-9,dy:-10,a:'end'}, FRU:{dx:9,dy:15,a:'start'}, URC:{dx:-9,dy:14,a:'end'},
+  LBD:{dx:9,dy:-12,a:'start'}, NQZ:{dx:9,dy:-10,a:'start'}, LED:{dx:9,dy:14,a:'start'},
+  KZN:{dx:9,dy:-10,a:'start'}, OVB:{dx:9,dy:-10,a:'start'}, TAS:{dx:9,dy:14,a:'start'},
+  DEL:{dx:9,dy:-10,a:'start'},
+};
+let rafId=null, dashOff=0;
+function initMap() {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+  const canvas = document.getElementById('route-map');
+  if (!canvas) return;
+  const W = canvas.parentElement.clientWidth - 28;
+  const H = Math.round(W * 380 / 700);
+  canvas.width = W; canvas.height = H;
+  const mx = x => x*W/700, my = y => y*H/380;
+  const dests = Object.keys(AP).filter(k => k !== 'DYU');
+  function draw() {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0,0,W,H);
+    const bg = ctx.createLinearGradient(0,0,W,H);
+    bg.addColorStop(0,'#040a1e'); bg.addColorStop(1,'#060e2a');
+    ctx.fillStyle = bg; ctx.fillRect(0,0,W,H);
+    ctx.strokeStyle = 'rgba(26,60,110,0.12)'; ctx.lineWidth = 1;
+    for (let x=0; x<W; x+=55*W/700) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y=0; y<H; y+=40*H/380) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+    dests.forEach(code => {
+      if (!AP[code]) return;
+      const hub=AP.DYU, to=AP[code];
+      const fx=mx(hub.x),fy=my(hub.y),tx=mx(to.x),ty=my(to.y);
+      const bx=(fx+tx)/2-(ty-fy)*0.18, by=(fy+ty)/2+(tx-fx)*0.18;
+      ctx.save(); ctx.strokeStyle='rgba(26,60,110,0.28)'; ctx.lineWidth=4; ctx.setLineDash([]);
+      ctx.beginPath(); ctx.moveTo(fx,fy); ctx.quadraticCurveTo(bx,by,tx,ty); ctx.stroke(); ctx.restore();
+      ctx.save(); ctx.strokeStyle='rgba(249,115,22,0.65)'; ctx.lineWidth=1.5;
+      ctx.setLineDash([7,5]); ctx.lineDashOffset=-dashOff;
+      ctx.shadowColor='rgba(249,115,22,0.35)'; ctx.shadowBlur=4;
+      ctx.beginPath(); ctx.moveTo(fx,fy); ctx.quadraticCurveTo(bx,by,tx,ty); ctx.stroke(); ctx.restore();
+      const r=4.5*W/700;
+      ctx.save(); ctx.shadowColor='rgba(249,115,22,0.6)'; ctx.shadowBlur=10;
+      ctx.fillStyle='#f97316'; ctx.beginPath(); ctx.arc(tx,ty,r,0,Math.PI*2); ctx.fill(); ctx.restore();
+      const o=LO[code]||{dx:10,dy:-8,a:'start'}, fs=Math.max(9,Math.round(10*W/700));
+      ctx.save(); ctx.shadowColor='rgba(0,0,0,0.9)'; ctx.shadowBlur=5; ctx.textAlign=o.a;
+      ctx.font=`bold ${fs}px Inter,system-ui`; ctx.fillStyle='#dde6f5';
+      ctx.fillText(code, tx+o.dx*W/700, ty+o.dy*H/380);
+      ctx.font=`${Math.max(8,fs-2)}px Inter,system-ui`; ctx.fillStyle='rgba(96,128,176,0.85)';
+      ctx.fillText(AP[code].name, tx+o.dx*W/700, ty+(o.dy+11)*H/380); ctx.restore();
+    });
+    const hx=mx(AP.DYU.x), hy=my(AP.DYU.y);
+    const pulse=8+3*Math.sin(Date.now()/650);
+    ctx.save(); ctx.globalAlpha=0.18+0.09*Math.sin(Date.now()/650);
+    ctx.strokeStyle='#1a3c6e'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(hx,hy,pulse+8,0,Math.PI*2); ctx.stroke(); ctx.restore();
+    const hg=ctx.createRadialGradient(hx,hy,0,hx,hy,20);
+    hg.addColorStop(0,'rgba(26,60,110,0.45)'); hg.addColorStop(1,'rgba(26,60,110,0)');
+    ctx.fillStyle=hg; ctx.beginPath(); ctx.arc(hx,hy,20,0,Math.PI*2); ctx.fill();
+    ctx.save(); ctx.shadowColor='rgba(26,60,110,0.9)'; ctx.shadowBlur=18;
+    ctx.fillStyle='#1a3c6e'; ctx.beginPath(); ctx.arc(hx,hy,7*W/700,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.shadowBlur=0; ctx.beginPath(); ctx.arc(hx,hy,3*W/700,0,Math.PI*2); ctx.fill(); ctx.restore();
+    const fs2=Math.max(10,Math.round(11*W/700));
+    ctx.save(); ctx.shadowColor='rgba(0,0,0,0.95)'; ctx.shadowBlur=6; ctx.textAlign='end';
+    ctx.font=`bold ${fs2}px Inter,system-ui`; ctx.fillStyle='#fff';
+    ctx.fillText('DYU', hx-11*W/700, hy-14*H/380);
+    ctx.font=`${Math.max(8,fs2-2)}px Inter,system-ui`; ctx.fillStyle='rgba(88,120,180,.9)';
+    ctx.fillText('Душанбе (ХАБ)', hx-11*W/700, hy-3*H/380); ctx.restore();
+    dashOff = (dashOff+0.28)%12; rafId = requestAnimationFrame(draw);
+  }
+  draw();
+}
+
+// ── CHARTS ───────────────────────────────────────────────────────────────────
+let cStatus=null, cRoutes=null, cPlan=null;
+const TT = { backgroundColor:'#071230', borderColor:'#1b3060', borderWidth:1, titleColor:'#e8eeff', bodyColor:'#6080b0', padding:10 };
+
+function buildCharts(flights, stats) {
+  if (cStatus) cStatus.destroy();
+  cStatus = new Chart(document.getElementById('chart-status'), {
+    type:'doughnut',
+    data:{ labels:['Вовремя','Задержан'],
+      datasets:[{ data:[stats.total_flights-stats.delayed_flights, stats.delayed_flights],
+        backgroundColor:['rgba(16,185,129,.82)','rgba(249,115,22,.82)'],
+        borderColor:['#10b981','#f97316'], borderWidth:2, hoverOffset:8 }]},
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'70%',
+      plugins:{ legend:{position:'right',labels:{color:'#e8eeff',font:{size:11},padding:10,boxWidth:11,boxHeight:11}},
+        tooltip:{...TT, callbacks:{label:ctx=>`${ctx.raw} рейсов (${Math.round(ctx.raw/stats.total_flights*100)}%)`}}}}
+  });
+  const rm={};
+  flights.forEach(f => {
+    const k=`${f.origin}→${f.destination}`;
+    if (!rm[k]) rm[k]={sum:0,cnt:0};
+    rm[k].cnt++;
+    if (f.delay_min>0) rm[k].sum+=f.delay_min;
+  });
+  const rows=Object.entries(rm).filter(([,v])=>v.sum>0).sort(([,a],[,b])=>(b.sum/b.cnt)-(a.sum/a.cnt)).slice(0,8);
+  const avgMins=rows.map(([,v])=>Math.round(v.sum/v.cnt)), maxM=Math.max(...avgMins,1);
+  if (cRoutes) cRoutes.destroy();
+  cRoutes = new Chart(document.getElementById('chart-routes'), {
+    type:'bar',
+    data:{ labels:rows.map(([k])=>k),
+      datasets:[{ data:avgMins, label:'Средн. задержка (мин)',
+        backgroundColor:avgMins.map(v=>`rgba(249,115,22,${0.35+0.65*v/maxM})`),
+        borderColor:avgMins.map(v=>`rgba(249,115,22,${0.5+0.5*v/maxM})`), borderWidth:1, borderRadius:4 }]},
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:TT},
+      scales:{ x:{grid:{color:'rgba(27,48,96,.6)'},ticks:{color:'#6080b0',font:{size:10}}},
+               y:{grid:{display:false},ticks:{color:'#e8eeff',font:{size:10.5}}}}}
+  });
+}
+
+// ── PREDICT ──────────────────────────────────────────────────────────────────
+const ML_AP = { TJK:'Душанбе (DYU)', DME:'Москва', DXB:'Дубай', IST:'Стамбул', SVO:'Москва-SVO', FRU:'Бишкек', URC:'Урумчи', KBL:'Кабул', TSE:'Астана' };
+const predHistory = [];
+
+function fillSelects() {
+  ['p-origin','p-dest'].forEach((id,idx) => {
+    const sel = document.getElementById(id);
+    Object.entries(ML_AP).forEach(([code,name]) => {
+      const opt = document.createElement('option');
+      opt.value = code; opt.textContent = `${code} — ${name}`;
+      if (idx===0 && code==='TJK') opt.selected = true;
+      if (idx===1 && code==='DME') opt.selected = true;
+      sel.appendChild(opt);
+    });
+  });
+  document.getElementById('p-date').value = new Date().toISOString().split('T')[0];
+}
+
+async function predict() {
+  const btn = document.getElementById('predict-btn');
+  btn.disabled = true; btn.textContent = '⏳ Анализ...';
+  try {
+    const body = {
+      origin:      document.getElementById('p-origin').value,
+      destination: document.getElementById('p-dest').value,
+      dep_hour:    parseInt(document.getElementById('p-hour').value),
+      aircraft:    document.getElementById('p-aircraft').value,
+      wind_speed:  parseFloat(document.getElementById('p-wind').value),
+      temperature: parseFloat(document.getElementById('p-temp').value),
+      visibility:  parseFloat(document.getElementById('p-vis').value),
+      is_weekend:  parseInt(document.getElementById('p-weekend').value),
+    };
+    const res = await fetch(`${API}/api/predict`, {
+      method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
+    }).then(r => r.json());
+
+    const labels = { LOW:'НИЗКИЙ', MEDIUM:'СРЕДНИЙ', HIGH:'ВЫСОКИЙ' };
+    document.getElementById('r-risk').textContent = labels[res.risk];
+    document.getElementById('r-risk').className = `r-risk ${res.risk}`;
+    document.getElementById('r-prob').textContent = `Вероятность задержки: ${Math.round(res.probability*100)}%`;
+    const fill = document.getElementById('r-fill');
+    fill.style.width = '0%'; fill.className = `r-fill ${res.risk}`;
+    document.getElementById('result-box').classList.add('show');
+    setTimeout(() => { fill.style.width = `${res.probability*100}%`; }, 50);
+
+    const wind=parseFloat(document.getElementById('p-wind').value),
+          temp=parseFloat(document.getElementById('p-temp').value),
+          vis=parseFloat(document.getElementById('p-vis').value),
+          hour=parseInt(document.getElementById('p-hour').value);
+    const setFactor = (id, txt, ok) => {
+      document.getElementById(id).textContent = txt;
+      document.getElementById(id).style.color = ok === 'bad' ? 'var(--red)' : ok === 'warn' ? 'var(--orange)' : 'var(--green)';
+    };
+    setFactor('rf-wind', wind>40?'⚠ Высокий':wind>20?'~ Средний':'✓ Норма', wind>40?'bad':wind>20?'warn':'ok');
+    setFactor('rf-temp', Math.abs(temp)>30?'⚠ Экстремальный':Math.abs(temp)>20?'~ Умеренный':'✓ Норма', Math.abs(temp)>30?'bad':Math.abs(temp)>20?'warn':'ok');
+    setFactor('rf-vis',  vis<2?'⚠ Низкая':vis<5?'~ Ограниченная':'✓ Хорошая', vis<2?'bad':vis<5?'warn':'ok');
+    setFactor('rf-hour', (hour>=6&&hour<=10)||(hour>=17&&hour<=20)?'⚠ Пиковое время':'✓ Норма', (hour>=6&&hour<=10)||(hour>=17&&hour<=20)?'warn':'ok');
+
+    predHistory.unshift({ route:`${body.origin} → ${body.destination}`, risk:res.risk, prob:Math.round(res.probability*100), time:new Date().toLocaleTimeString('ru',{hour:'2-digit',minute:'2-digit'}) });
+    renderPredHistory();
+  } finally { btn.disabled=false; btn.textContent='Рассчитать прогноз задержки'; }
+}
+
+function renderPredHistory() {
+  const el = document.getElementById('pred-history');
+  if (!predHistory.length) return;
+  el.innerHTML = predHistory.slice(0,8).map(p => `
+    <div class="phi">
+      <div class="phi-route">${p.route}</div>
+      <span class="risk-pill ${p.risk}" style="margin-left:auto">${p.prob}% · ${p.risk}</span>
+      <div class="phi-time">${p.time}</div>
+    </div>`).join('');
+}
+
+// ── CREWS ────────────────────────────────────────────────────────────────────
+const CREWS = [
+  { id:1,  name:'Рахимов Бахром Д.',     role:'КВС',          st:'flight',  hours:3120, qual:'ATPL', flight:'SZ-102', med:'05.2026' },
+  { id:2,  name:'Иванов Алексей П.',     role:'КВС',          st:'flight',  hours:2847, qual:'ATPL', flight:'SZ-105', med:'11.2025' },
+  { id:3,  name:'Назаров Фаррух М.',     role:'КВС',          st:'standby', hours:2610, qual:'ATPL', flight:'—',      med:'03.2026' },
+  { id:4,  name:'Мухамедов Дилшод А.',   role:'Второй пилот', st:'flight',  hours:1543, qual:'CPL',  flight:'SZ-102', med:'07.2026' },
+  { id:5,  name:'Турдиев Санжар Б.',     role:'Второй пилот', st:'rest',    hours:1280, qual:'CPL',  flight:'—',      med:'09.2025' },
+  { id:6,  name:'Холиков Одил Т.',       role:'Второй пилот', st:'standby', hours:1620, qual:'CPL',  flight:'—',      med:'02.2026' },
+  { id:7,  name:'Каримов Умид Н.',       role:'КВС',          st:'flight',  hours:4100, qual:'ATPL', flight:'SZ-108', med:'06.2026' },
+  { id:8,  name:'Садыков Руслан В.',     role:'Второй пилот', st:'rest',    hours:980,  qual:'CPL',  flight:'—',      med:'04.2026' },
+  { id:9,  name:'Юсупов Тимур А.',       role:'Бортинженер',  st:'flight',  hours:5200, qual:'MEI',  flight:'SZ-108', med:'01.2026' },
+  { id:10, name:'Давлатов Шохин Р.',     role:'Бортинженер',  st:'standby', hours:3800, qual:'MEI',  flight:'—',      med:'08.2025' },
+  { id:11, name:'Нурматов Зафар К.',     role:'КВС',          st:'rest',    hours:2200, qual:'ATPL', flight:'—',      med:'12.2025' },
+  { id:12, name:'Рустамов Элёр С.',      role:'Второй пилот', st:'flight',  hours:1100, qual:'CPL',  flight:'SZ-110', med:'05.2026' },
+];
+const ST_LBL  = { flight:'В рейсе', standby:'Дежурство', rest:'Отдых', off:'Выходной' };
+const ST_CLR  = { flight:'var(--teal)', standby:'var(--orange)', rest:'var(--muted)', off:'#374060' };
+
+function renderCrews() {
+  document.getElementById('crew-tbody').innerHTML = CREWS.map(c => `
+    <tr>
+      <td style="color:var(--muted)">${c.id}</td>
+      <td><strong>${c.name}</strong></td>
+      <td style="color:var(--muted)">${c.role}</td>
+      <td><span class="crew-dot" style="background:${ST_CLR[c.st]};box-shadow:${c.st==='flight'?'0 0 6px rgba(6,182,212,.5)':'none'}"></span>${ST_LBL[c.st]}</td>
+      <td>
+        <div class="hours-bar">
+          <div class="hours-bg"><div class="hours-fill" style="width:${Math.round(c.hours/6000*100)}%"></div></div>
+          <span style="font-size:11px">${c.hours.toLocaleString()} ч</span>
+        </div>
+      </td>
+      <td><span class="icao-badge">${c.qual}</span></td>
+      <td><span ${c.flight!=='—'?'class="fno"':'style="color:var(--muted)"'}>${c.flight}</span></td>
+      <td style="font-size:11px;color:${c.med<='08.2025'?'var(--orange)':'var(--muted)'}">${c.med}</td>
+    </tr>`).join('');
+}
+
+// ── MAINTENANCE ──────────────────────────────────────────────────────────────
+const FLEET = [
+  { reg:'EY-888', type:'Boeing 737-900ER', status:'ok',
+    fh:18420, cycles:9210,
+    sensors:{ '🌡 Темп. двигателя':{v:425,max:600,u:'°C'}, '⛽ Топливо':{v:82,max:100,u:'%'}, '💧 Гидравлика':{v:92,max:100,u:'%'}, '⚙ Шасси':{v:88,max:100,u:'%'} },
+    last:'15.12.2025', next:'15.06.2026' },
+  { reg:'EY-886', type:'Airbus A320-200',  status:'warn',
+    fh:22100, cycles:11050,
+    sensors:{ '🌡 Темп. двигателя':{v:510,max:600,u:'°C'}, '⛽ Топливо':{v:65,max:100,u:'%'}, '💧 Гидравлика':{v:78,max:100,u:'%'}, '⚙ Шасси':{v:71,max:100,u:'%'} },
+    last:'02.12.2025', next:'02.06.2026' },
+  { reg:'EY-889', type:'Boeing 737-800',   status:'ok',
+    fh:14300, cycles:7150,
+    sensors:{ '🌡 Темп. двигателя':{v:390,max:600,u:'°C'}, '⛽ Топливо':{v:95,max:100,u:'%'}, '💧 Гидравлика':{v:96,max:100,u:'%'}, '⚙ Шасси':{v:94,max:100,u:'%'} },
+    last:'10.02.2026', next:'10.08.2026' },
+  { reg:'EY-742', type:'Airbus A319-100',  status:'critical',
+    fh:31200, cycles:15600,
+    sensors:{ '🌡 Темп. двигателя':{v:575,max:600,u:'°C'}, '⛽ Топливо':{v:45,max:100,u:'%'}, '💧 Гидравлика':{v:62,max:100,u:'%'}, '⚙ Шасси':{v:55,max:100,u:'%'} },
+    last:'20.11.2025', next:'20.05.2026' },
+  { reg:'EY-743', type:'Boeing 757-200',   status:'ok',
+    fh:25800, cycles:12900,
+    sensors:{ '🌡 Темп. двигателя':{v:445,max:600,u:'°C'}, '⛽ Топливо':{v:78,max:100,u:'%'}, '💧 Гидравлика':{v:89,max:100,u:'%'}, '⚙ Шасси':{v:85,max:100,u:'%'} },
+    last:'01.03.2026', next:'01.09.2026' },
+  { reg:'EY-744', type:'Boeing 737-700',   status:'warn',
+    fh:19700, cycles:9850,
+    sensors:{ '🌡 Темп. двигателя':{v:485,max:600,u:'°C'}, '⛽ Топливо':{v:58,max:100,u:'%'}, '💧 Гидравлика':{v:74,max:100,u:'%'}, '⚙ Шасси':{v:68,max:100,u:'%'} },
+    last:'25.12.2025', next:'25.06.2026' },
+];
+const MAINT_LBL = { ok:'ИСПРАВЕН', warn:'ВНИМАНИЕ', critical:'ТО ТРЕБУЕТСЯ' };
+
+function sCls(v, max) { const p=v/max*100; return p>95?'danger':p>75?'warn':'ok'; }
+
+function renderMaintenance() {
+  const ok=FLEET.filter(a=>a.status==='ok').length,
+        warn=FLEET.filter(a=>a.status==='warn').length,
+        crit=FLEET.filter(a=>a.status==='critical').length;
+  document.getElementById('maint-ok').textContent   = ok;
+  document.getElementById('maint-warn').textContent  = warn;
+  document.getElementById('maint-crit').textContent  = crit;
+
+  document.getElementById('maint-grid').innerHTML = FLEET.map(a => {
+    const bars = Object.entries(a.sensors).map(([name,s]) => {
+      const pct=Math.round(s.v/s.max*100), cls=sCls(s.v,s.max);
+      const vc = cls==='danger'?'var(--red)':cls==='warn'?'var(--orange)':'var(--green)';
+      return `<div class="s-bar-wrap">
+        <div class="s-bar-lbl"><span>${name}</span><span style="color:${vc}">${s.v} ${s.u}</span></div>
+        <div class="s-bar"><div class="s-bar-fill ${cls}" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join('');
+    return `<div class="maint-card">
+      <div class="maint-hdr">
+        <div><div class="maint-reg">${a.reg}</div><div class="maint-type">${a.type}</div></div>
+        <span class="maint-badge ${a.status}">${MAINT_LBL[a.status]}</span>
+      </div>
+      <div class="maint-body">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:11px;color:var(--muted)">✈ Налёт</span>
+          <span style="font-weight:700;color:var(--gold)">${a.fh.toLocaleString()} ч</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <span style="font-size:11px;color:var(--muted)">🔄 Циклов</span>
+          <span style="font-weight:700">${a.cycles.toLocaleString()}</span>
+        </div>
+        ${bars}
+      </div>
+      <div class="maint-footer">
+        <span>Послед. ТО: <strong>${a.last}</strong></span>
+        <span>Следующее: <strong style="color:${a.status==='critical'?'var(--red)':'var(--text)'}">${a.next}</strong></span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── PLANNING ─────────────────────────────────────────────────────────────────
+const CITY_NAMES = { TJK:'Душанбе', DME:'Москва', DXB:'Дубай', IST:'Стамбул', FRU:'Бишкек', URC:'Урумчи', SVO:'Москва-SVO', KBL:'Кабул', TSE:'Астана' };
+const WX_BASE = {
+  TJK:{ temp:28, wind:14, vis:9.2, hum:35 },
+  DME:{ temp:12, wind:22, vis:7.1, hum:65 },
+  DXB:{ temp:38, wind:18, vis:8.5, hum:55 },
+  IST:{ temp:19, wind:25, vis:7.4, hum:60 },
+  FRU:{ temp:22, wind:16, vis:8.0, hum:45 },
+  URC:{ temp:20, wind:20, vis:6.3, hum:40 },
+};
+const DAYS_RU = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const DEP_TIMES = ['06:30','09:15','13:45','17:20','21:00'];
+const LOADS = ['Низкая','Средняя','Высокая'];
+const LOAD_CLR = { 'Низкая':'var(--green)', 'Средняя':'var(--orange)', 'Высокая':'var(--red)' };
+
+function initPlanningDefaults() {
+  const t = new Date(), n7 = new Date(t.getTime()+7*864e5);
+  document.getElementById('pl-from').value = t.toISOString().split('T')[0];
+  document.getElementById('pl-to').value   = n7.toISOString().split('T')[0];
+}
+
+async function loadPlanning() {
+  const orig = document.getElementById('pl-origin').value;
+  const dest = document.getElementById('pl-dest').value;
+  const from = new Date(document.getElementById('pl-from').value);
+  const to   = new Date(document.getElementById('pl-to').value);
+  const origName = CITY_NAMES[orig]||orig, destName = CITY_NAMES[dest]||dest;
+
+  document.getElementById('pl-orig-name').textContent = origName;
+  document.getElementById('pl-dest-name').textContent = destName;
+
+  const wxO = WX_BASE[orig]||{temp:20,wind:15,vis:8,hum:50};
+  const wxD = WX_BASE[dest]||{temp:20,wind:15,vis:8,hum:50};
+  document.getElementById('wxo-temp').textContent = wxO.temp+'°';
+  document.getElementById('wxo-wind').textContent = wxO.wind;
+  document.getElementById('wxo-vis').textContent  = wxO.vis.toFixed(1);
+  document.getElementById('wxo-hum').textContent  = wxO.hum+'%';
+  document.getElementById('wxd-temp').textContent = wxD.temp+'°';
+  document.getElementById('wxd-wind').textContent = wxD.wind;
+  document.getElementById('wxd-vis').textContent  = wxD.vis.toFixed(1);
+  document.getElementById('wxd-hum').textContent  = wxD.hum+'%';
+
+  const days=[];
+  let cur=new Date(from);
+  while (cur<=to && days.length<14) { days.push(new Date(cur)); cur.setDate(cur.getDate()+1); }
+  document.getElementById('pl-chip').textContent = `${origName} → ${destName} · ${days.length} дней`;
+
+  const rows = days.map(day => {
+    const doy = day.getDate();
+    const isWE = [0,6].includes(day.getDay());
+    const depTime = DEP_TIMES[day.getDay()%DEP_TIMES.length];
+    const depHour = parseInt(depTime);
+    const wind = Math.max(5, wxO.wind + (doy%5-2)*2);
+    const temp = wxO.temp + (doy%7-3);
+    const vis  = Math.max(1, wxO.vis - (doy%4)*0.4);
+    const loadO = LOADS[(doy*31+depHour)%3];
+    const loadD = LOADS[(doy*17+depHour)%3];
+    return { day, isWE, depTime, depHour, wind, temp, vis, loadO, loadD, orig, dest };
+  });
+
+  document.getElementById('plan-tbody').innerHTML = '<tr class="empty-row"><td colspan="9">⏳ Загрузка прогнозов…</td></tr>';
+
+  const risks = await Promise.all(rows.map(r =>
+    fetch(`${API}/api/predict`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ origin:r.orig, destination:r.dest, dep_hour:r.depHour,
+        aircraft:'B737', wind_speed:r.wind, temperature:r.temp, visibility:r.vis, is_weekend:r.isWE?1:0 })
+    }).then(res=>res.json()).catch(()=>({risk:'LOW',probability:0.1}))
+  ));
+
+  document.getElementById('plan-tbody').innerHTML = rows.map((r,i) => `
+    <tr>
+      <td><strong>${r.day.toLocaleDateString('ru',{day:'2-digit',month:'2-digit'})}</strong></td>
+      <td style="color:${r.isWE?'var(--orange)':'var(--muted)'}">${DAYS_RU[r.day.getDay()]}</td>
+      <td><strong>${r.depTime}</strong></td>
+      <td style="color:${LOAD_CLR[r.loadO]}">${r.loadO}</td>
+      <td style="color:${LOAD_CLR[r.loadD]}">${r.loadD}</td>
+      <td>${r.wind} км/ч</td>
+      <td>${r.temp}°C</td>
+      <td>${r.vis.toFixed(1)} км</td>
+      <td><span class="risk-pill ${risks[i].risk}">${Math.round(risks[i].probability*100)}% · ${risks[i].risk}</span></td>
+    </tr>`).join('');
+
+  if (cPlan) cPlan.destroy();
+  cPlan = new Chart(document.getElementById('chart-plan'), {
+    type:'line',
+    data:{ labels:rows.map(r=>r.day.toLocaleDateString('ru',{day:'2-digit',month:'2-digit'})),
+      datasets:[{ label:'Риск задержки (%)', data:risks.map(r=>Math.round(r.probability*100)),
+        borderColor:'rgba(249,115,22,.8)', backgroundColor:'rgba(249,115,22,.08)',
+        fill:true, tension:.4, pointBackgroundColor:'#f97316', pointBorderColor:'#fff', pointBorderWidth:2, pointRadius:5 }]},
+    options:{ responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{labels:{color:'#e8eeff',font:{size:11}}}, tooltip:TT },
+      scales:{ x:{grid:{color:'rgba(27,48,96,.5)'},ticks:{color:'#6080b0',font:{size:10}}},
+               y:{grid:{color:'rgba(27,48,96,.5)'},ticks:{color:'#6080b0',font:{size:10}},min:0,max:100}}}
+  });
+}
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+fillSelects();
+initPlanningDefaults();
+renderCrews();
+renderMaintenance();
+loadMonitoring();
+setInterval(loadMonitoring, 30000);
+window.addEventListener('resize', () => { clearTimeout(window._rz); window._rz = setTimeout(initMap, 150); });
+</script>
+</body>
+</html>
