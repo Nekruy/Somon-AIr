@@ -15,8 +15,6 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-import sys, os
-sys.path.insert(0, os.path.dirname(__file__))
 from delay_model import get_predictor, ROUTES, AIRCRAFT_TYPES
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "..", "flights.db")

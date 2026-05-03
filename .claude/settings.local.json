@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(uvicorn main:app --port 8000)",
+      "Bash(curl -s http://localhost:8000/api/stats)",
+      "WebFetch(domain:www.somonair.com)"
+    ]
+  }
+}
